@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { saveAuthSession } from '../../../../shared/auth/session';
 
-// Estado inicial del formulario de registro.
 const initialRegisterData = {
   fullName: '',
   email: '',
@@ -9,14 +10,15 @@ const initialRegisterData = {
   confirmPassword: ''
 };
 
-// Pantalla de autenticación: login, registro y recuperación en un mismo componente.
+// Pantalla de autenticacion conectada al backend real.
 export const Login = () => {
   const [mode, setMode] = useState('login');
   const [registerData, setRegisterData] = useState(initialRegisterData);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState({ type: '', message: '' });
   const navigate = useNavigate();
 
-  // Actualiza en tiempo real los campos del login.
   const handleLoginChange = ({ target }) => {
     setLoginData((current) => ({
       ...current,
@@ -24,7 +26,6 @@ export const Login = () => {
     }));
   };
 
-  // Actualiza en tiempo real los campos del registro.
   const handleRegisterChange = ({ target }) => {
     setRegisterData((current) => ({
       ...current,
@@ -32,39 +33,63 @@ export const Login = () => {
     }));
   };
 
-  // Guarda una sesión simulada en localStorage para el flujo actual del frontend.
-  const saveSession = (name, email) => {
-    const cleanName = name?.trim();
-    const fallbackName = email?.split('@')[0]?.trim() || 'Usuario';
-
-    localStorage.setItem('auth', 'true');
-    localStorage.setItem('authUserName', cleanName || fallbackName);
-    localStorage.setItem('authUserEmail', email || '');
+  const handleBack = () => {
+    navigate('/', { replace: true });
   };
 
-  // En login usamos el correo para derivar un nombre visible si no existe nombre completo.
-  const handleLoginSubmit = (event) => {
+  const handleLoginSubmit = async (event) => {
     event.preventDefault();
-    saveSession('', loginData.email);
-    navigate('/admin', { replace: true });
+
+    try {
+      setSubmitting(true);
+      setFeedback({ type: '', message: '' });
+      const { data } = await axios.post('/api/auth/login', {
+        email: loginData.email,
+        password: loginData.password
+      });
+
+      saveAuthSession(data.user);
+      navigate('/admin', { replace: true });
+    } catch (error) {
+      setFeedback({
+        type: 'danger',
+        message: error.response?.data?.message || 'No fue posible iniciar sesion.'
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  // En registro validamos las contraseñas antes de guardar la sesión.
-  const handleRegisterSubmit = (event) => {
+  const handleRegisterSubmit = async (event) => {
     event.preventDefault();
 
     if (registerData.password !== registerData.confirmPassword) {
-      window.alert('Las contrasenas no coinciden.');
+      setFeedback({
+        type: 'danger',
+        message: 'Las contrasenas no coinciden.'
+      });
       return;
     }
 
-    saveSession(registerData.fullName, registerData.email);
-    navigate('/admin', { replace: true });
-  };
+    try {
+      setSubmitting(true);
+      setFeedback({ type: '', message: '' });
+      const { data } = await axios.post('/api/auth/register', {
+        name: registerData.fullName,
+        email: registerData.email,
+        password: registerData.password
+      });
 
-  // Regresa al usuario a la landing.
-  const handleBack = () => {
-    navigate('/', { replace: true });
+      saveAuthSession(data.user);
+      navigate('/admin', { replace: true });
+    } catch (error) {
+      setFeedback({
+        type: 'danger',
+        message: error.response?.data?.message || 'No fue posible crear la cuenta.'
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -88,7 +113,6 @@ export const Login = () => {
 
       <div className="container position-relative">
         <div className="row justify-content-center align-items-center g-4">
-          {/* Columna izquierda con copy y beneficios del acceso */}
           <div className="col-12 col-lg-5">
             <div className="text-light text-center text-lg-start">
               <button
@@ -115,26 +139,26 @@ export const Login = () => {
               </h1>
 
               <p className="text-light opacity-75 fs-5 mb-4">
-                Organice el ingreso con formularios mas claros para iniciar sesion, crear cuenta
-                y recuperar acceso sin perder el estilo del proyecto.
+                Ahora el acceso ya usa tu base de datos real para registrar usuarios y validar el
+                inicio de sesion antes de entrar al dashboard.
               </p>
 
               <div className="row g-3 text-start">
                 {[
                   {
                     icon: 'bi-person-check',
-                    title: 'Acceso rapido',
-                    text: 'Entra al dashboard despues de autenticarte.'
+                    title: 'Inicio validado',
+                    text: 'Verificamos el correo y la contrasena desde MongoDB.'
                   },
                   {
                     icon: 'bi-person-plus',
-                    title: 'Registro guiado',
-                    text: 'Crea tu cuenta con una estructura mas ordenada.'
+                    title: 'Registro real',
+                    text: 'Las cuentas nuevas se guardan en la coleccion usuarios.'
                   },
                   {
-                    icon: 'bi-key',
-                    title: 'Recuperacion simple',
-                    text: 'Vuelve al login con un solo clic.'
+                    icon: 'bi-shield-check',
+                    title: 'Contrasena protegida',
+                    text: 'El backend almacena hashes y no texto plano.'
                   }
                 ].map((item) => (
                   <div className="col-12" key={item.title}>
@@ -163,7 +187,6 @@ export const Login = () => {
             </div>
           </div>
 
-          {/* Columna derecha con formularios de autenticación */}
           <div className="col-12 col-lg-6 col-xl-5">
             <div
               className="rounded-5 border border-success border-opacity-25 p-4 p-md-5 text-white shadow-lg"
@@ -173,14 +196,16 @@ export const Login = () => {
                 backdropFilter: 'blur(18px)'
               }}
             >
-              {/* Interruptor visual para cambiar entre login y registro */}
               <div
                 className="d-flex rounded-pill p-1 mb-4"
                 style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }}
               >
                 <button
                   type="button"
-                  onClick={() => setMode('login')}
+                  onClick={() => {
+                    setMode('login');
+                    setFeedback({ type: '', message: '' });
+                  }}
                   className={`btn rounded-pill flex-fill fw-semibold ${
                     mode === 'login' ? 'btn-success text-dark' : 'btn-link text-light text-decoration-none'
                   }`}
@@ -189,7 +214,10 @@ export const Login = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setMode('register')}
+                  onClick={() => {
+                    setMode('register');
+                    setFeedback({ type: '', message: '' });
+                  }}
                   className={`btn rounded-pill flex-fill fw-semibold ${
                     mode === 'register'
                       ? 'btn-success text-dark'
@@ -200,12 +228,18 @@ export const Login = () => {
                 </button>
               </div>
 
+              {feedback.message ? (
+                <div className={`alert alert-${feedback.type} rounded-4`} role="alert">
+                  {feedback.message}
+                </div>
+              ) : null}
+
               {mode === 'login' && (
                 <form onSubmit={handleLoginSubmit}>
                   <div className="mb-4 text-start">
                     <h2 className="text-white fw-bold mb-2">Bienvenido de nuevo</h2>
                     <p className="text-light opacity-75 mb-0">
-                      Ingresa tus datos para acceder al dashboard.
+                      Inicia sesion con el usuario que ya tienes guardado.
                     </p>
                   </div>
 
@@ -218,7 +252,7 @@ export const Login = () => {
                       onChange={handleLoginChange}
                       className="form-control border-0 rounded-4 px-3 py-3"
                       style={{ backgroundColor: '#1d2320', color: 'white' }}
-                      placeholder="rick@c137.com"
+                      placeholder="tu-correo@dominio.com"
                       required
                     />
                   </div>
@@ -228,7 +262,13 @@ export const Login = () => {
                       <label className="form-label text-light small mb-0">Contrasena</label>
                       <button
                         type="button"
-                        onClick={() => setMode('forgot')}
+                        onClick={() =>
+                          setFeedback({
+                            type: 'info',
+                            message:
+                              'La recuperacion todavia no envia correos. Si quieres, te dejo ese flujo en el siguiente paso.'
+                          })
+                        }
                         className="btn btn-link text-info text-decoration-none small p-0"
                       >
                         Olvide mi contrasena
@@ -246,15 +286,21 @@ export const Login = () => {
                     />
                   </div>
 
-                  <button className="btn btn-success w-100 rounded-4 py-3 fw-bold mt-2">
-                    Entrar al dashboard
+                  <button
+                    className="btn btn-success w-100 rounded-4 py-3 fw-bold mt-2"
+                    disabled={submitting}
+                  >
+                    {submitting ? 'Ingresando...' : 'Entrar al dashboard'}
                   </button>
 
                   <p className="text-center text-light opacity-75 small mt-4 mb-0">
                     Aun no tienes cuenta?
                     <button
                       type="button"
-                      onClick={() => setMode('register')}
+                      onClick={() => {
+                        setMode('register');
+                        setFeedback({ type: '', message: '' });
+                      }}
                       className="btn btn-link text-success text-decoration-none fw-semibold ms-1 p-0"
                     >
                       Registrate aqui
@@ -268,7 +314,7 @@ export const Login = () => {
                   <div className="mb-4 text-start">
                     <h2 className="text-white fw-bold mb-2">Crea tu cuenta</h2>
                     <p className="text-light opacity-75 mb-0">
-                      Completa el registro para habilitar el acceso al portal.
+                      Este formulario guarda usuarios reales en tu base de datos.
                     </p>
                   </div>
 
@@ -281,7 +327,7 @@ export const Login = () => {
                       onChange={handleRegisterChange}
                       className="form-control border-0 rounded-4 px-3 py-3"
                       style={{ backgroundColor: '#1d2320', color: 'white' }}
-                      placeholder="Morty Smith"
+                      placeholder="Tu nombre completo"
                       required
                     />
                   </div>
@@ -295,7 +341,7 @@ export const Login = () => {
                       onChange={handleRegisterChange}
                       className="form-control border-0 rounded-4 px-3 py-3"
                       style={{ backgroundColor: '#1d2320', color: 'white' }}
-                      placeholder="morty@portal.com"
+                      placeholder="tu-correo@dominio.com"
                       required
                     />
                   </div>
@@ -329,55 +375,26 @@ export const Login = () => {
                     </div>
                   </div>
 
-                  <button className="btn btn-success w-100 rounded-4 py-3 fw-bold mt-4">
-                    Crear cuenta y entrar
+                  <button
+                    className="btn btn-success w-100 rounded-4 py-3 fw-bold mt-4"
+                    disabled={submitting}
+                  >
+                    {submitting ? 'Creando cuenta...' : 'Crear cuenta y entrar'}
                   </button>
 
                   <p className="text-center text-light opacity-75 small mt-4 mb-0">
                     Ya tienes cuenta?
                     <button
                       type="button"
-                      onClick={() => setMode('login')}
+                      onClick={() => {
+                        setMode('login');
+                        setFeedback({ type: '', message: '' });
+                      }}
                       className="btn btn-link text-info text-decoration-none fw-semibold ms-1 p-0"
                     >
                       Inicia sesion
                     </button>
                   </p>
-                </form>
-              )}
-
-              {/* Modo auxiliar de recuperación de acceso */}
-              {mode === 'forgot' && (
-                <form onSubmit={(event) => event.preventDefault()}>
-                  <div className="mb-4 text-start">
-                    <h2 className="text-white fw-bold mb-2">Recuperar acceso</h2>
-                    <p className="text-light opacity-75 mb-0">
-                      Escribe tu correo y luego vuelve al login para continuar.
-                    </p>
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="form-label text-light small">Correo electronico</label>
-                    <input
-                      type="email"
-                      className="form-control border-0 rounded-4 px-3 py-3"
-                      style={{ backgroundColor: '#1d2320', color: 'white' }}
-                      placeholder="tu-email@universo.com"
-                      required
-                    />
-                  </div>
-
-                  <button className="btn btn-info text-dark w-100 rounded-4 py-3 fw-bold mt-2">
-                    Enviar solicitud
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setMode('login')}
-                    className="btn btn-link text-success text-decoration-none w-100 mt-3"
-                  >
-                    Volver al login
-                  </button>
                 </form>
               )}
             </div>

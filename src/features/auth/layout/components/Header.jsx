@@ -1,15 +1,22 @@
+import { useEffect, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
+import {
+  clearAuthSession,
+  getAuthSession,
+  subscribeToAuthSession
+} from '../../../../shared/auth/session';
 
-// Header compartido: muestra navegación pública y el estado visible de la sesión.
+// Header compartido: muestra navegacion publica y el estado visible de la sesion.
 export const Header = () => {
-  const isAuthenticated = localStorage.getItem('auth') === 'true';
-  const userName = localStorage.getItem('authUserName') || 'Usuario';
+  const [session, setSession] = useState(() => getAuthSession());
+  const isUserAuthenticated = Boolean(session);
+  const userName = session?.name || 'Usuario';
 
-  // Al cerrar sesión limpiamos todo lo que usamos para identificar al usuario.
+  useEffect(() => subscribeToAuthSession(() => setSession(getAuthSession())), []);
+
+  // Al cerrar sesion limpiamos el estado global y regresamos al inicio.
   const handleLogout = () => {
-    localStorage.removeItem('auth');
-    localStorage.removeItem('authUserName');
-    localStorage.removeItem('authUserEmail');
+    clearAuthSession();
     window.location.href = '/';
   };
 
@@ -17,11 +24,10 @@ export const Header = () => {
     <nav className="navbar navbar-dark bg-black border-bottom border-success border-opacity-25 py-3 shadow-sm">
       <div className="container-fluid px-3 px-md-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
         <Link className="navbar-brand fw-bold text-success fs-4 me-0" to="/">
-          RYM <span className="text-info">PORTAL</span>
+          GASTOS <span className="text-info">DIARIOS</span>
         </Link>
 
         <div className="d-flex flex-wrap align-items-center justify-content-end gap-2 gap-md-3 ms-auto header-actions">
-          {/* Enlace al inicio */}
           <NavLink
             to="/"
             className={({ isActive }) =>
@@ -33,9 +39,30 @@ export const Header = () => {
             <i className="bi bi-house-door-fill me-2"></i>Inicio
           </NavLink>
 
-          {isAuthenticated ? (
+          <NavLink
+            to="/api"
+            className={({ isActive }) =>
+              `btn btn-sm px-3 px-md-4 rounded-pill border border-info border-opacity-50 header-action ${
+                isActive ? 'btn-info text-dark' : 'btn-outline-info text-info'
+              }`
+            }
+          >
+            <i className="bi bi-search me-2"></i>API
+          </NavLink>
+
+          {isUserAuthenticated ? (
             <>
-              {/* Estado visual de la sesión iniciada */}
+              <NavLink
+                to="/admin"
+                className={({ isActive }) =>
+                  `btn btn-sm px-3 px-md-4 rounded-pill border border-success border-opacity-50 header-action ${
+                    isActive ? 'btn-success text-black' : 'btn-outline-success text-success'
+                  }`
+                }
+              >
+                <i className="bi bi-grid-1x2-fill me-2"></i>Dashboard
+              </NavLink>
+
               <div className="d-flex align-items-center gap-2 rounded-pill border border-success border-opacity-25 px-3 py-2 text-light header-user">
                 <span className="d-inline-flex align-items-center justify-content-center rounded-circle bg-success text-dark fw-bold header-avatar">
                   {userName.charAt(0).toUpperCase()}

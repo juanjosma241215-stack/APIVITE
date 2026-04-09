@@ -1,47 +1,128 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 
-// Hook custom que centraliza la carga de personajes y el cálculo de estadísticas.
-export const useRickAndMorty = () => {
-  const [characters, setCharacters] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [stats, setStats] = useState({ total: 0, species: 0, alerts: 0 });
+const MONTHLY_BUDGET = 1050000;
 
-  // Carga inicial de datos desde la API pública.
-  const fetchData = async () => {
+// Hook conectado al backend real para el CRUD de gastos.
+export const useRickAndMorty = () => {
+  const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState('');
+  const [stats, setStats] = useState({
+    total: 0,
+    species: 0,
+    alerts: 0,
+    budgetUsed: '0%',
+    totalAmount: 0
+  });
+
+  const fetchExpenses = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await axios.get('https://rickandmortyapi.com/api/character');
-      const results = res.data.results;
+      setError('');
+      const { data } = await axios.get('/api/expenses');
+      setExpenses(data);
+    } catch (err) {
+      setError(err.response?.data?.message || 'No fue posible cargar los gastos.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-      setCharacters(results);
+  useEffect(() => {
+    fetchExpenses();
+  }, [fetchExpenses]);
 
-      // Calculamos los KPIs que luego usan las tarjetas del dashboard.
-      const uniqueSpecies = [...new Set(results.map((c) => c.species))].length;
-      const deadCount = results.filter((c) => c.status === 'Dead').length;
+  useEffect(() => {
+    const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+    const categoryCount = new Set(expenses.map((expense) => expense.category)).size;
+    const highExpenses = expenses.filter((expense) => expense.status === 'high').length;
+    const budgetUsed = `${Math.round((totalAmount / MONTHLY_BUDGET) * 100)}%`;
 
-      setStats({
-        total: res.data.info.count,
-        species: uniqueSpecies,
-        alerts: deadCount
+    setStats({
+      total: expenses.length,
+      species: categoryCount,
+      alerts: highExpenses,
+      budgetUsed,
+      totalAmount
+    });
+  }, [expenses]);
+
+  const addExpense = async ({ name, category, amount }) => {
+    try {
+      setSubmitting(true);
+      setError('');
+      const { data } = await axios.post('/api/expenses', {
+        name,
+        category,
+        amount
       });
-      setLoading(false);
-    } catch (error) {
-      console.error('Error interdimensional', error);
-      setLoading(false);
+      setExpenses((current) => [data, ...current]);
+    } catch (err) {
+      throw new Error(err.response?.data?.message || 'No fue posible crear el gasto.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  // Solo cargamos una vez al montar el dashboard.
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const updateExpense = async (id, payload) => {
+    try {
+      setSubmitting(true);
+      setError('');
+      const { data } = await axios.put(`/api/expenses/${id}`, payload);
+      setExpenses((current) => current.map((expense) => (expense._id === id ? data : expense)));
+    } catch (err) {
+      throw new Error(err.response?.data?.message || 'No fue posible actualizar el gasto.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-  // Filtro local para el buscador del dashboard.
-  const filteredCharacters = characters.filter((char) =>
-    char.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const deleteExpense = async (id) => {
+    try {
+      setSubmitting(true);
+      setError('');
+      await axios.delete(`/api/expenses/${id}`);
+      setExpenses((current) => current.filter((expense) => expense._id !== id));
+    } catch (err) {
+      throw new Error(err.response?.data?.message || 'No fue posible eliminar el gasto.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const resetExpenses = async () => {
+    try {
+      setSubmitting(true);
+      setError('');
+      const { data } = await axios.post('/api/expenses/reset');
+      setExpenses(data);
+    } catch (err) {
+      throw new Error(err.response?.data?.message || 'No fue posible reiniciar la demo.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const filteredCharacters = expenses.filter((expense) =>
+    `${expense.name} ${expense.category}`.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return { filteredCharacters, stats, loading, searchTerm, setSearchTerm };
+  return {
+    filteredCharacters,
+    allExpenses: expenses,
+    stats,
+    loading,
+    submitting,
+    error,
+    searchTerm,
+    setSearchTerm,
+    addExpense,
+    updateExpense,
+    deleteExpense,
+    resetExpenses,
+    refetchExpenses: fetchExpenses
+  };
 };

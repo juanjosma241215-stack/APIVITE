@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import taskRoutes from './routes/taskRoutes.js';
+import expenseRoutes from './routes/expenseRoutes.js';
+import authRoutes from './routes/authRoutes.js';
 import { errorHandler, notFound } from './middlewares/errorMiddleware.js';
 
 // Configuración central de Express.
@@ -28,6 +30,8 @@ app.get('/', (_req, res) => {
 
 // Módulo CRUD de tareas.
 app.use('/api/tasks', taskRoutes);
+app.use('/api/expenses', expenseRoutes);
+app.use('/api/auth', authRoutes);
 
 // Middleware final para rutas inexistentes y errores del servidor.
 app.use(notFound);

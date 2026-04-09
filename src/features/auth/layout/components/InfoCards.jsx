@@ -58,7 +58,7 @@ export const InfoCards = () => {
             la logica de la Ciudadela.
           </p>
           <a
-            href="https://github.com"
+            href="https://github.com/juanjosma241215-stack/APIVITE"
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-sm btn-info w-100 fw-bold text-dark"
