@@ -1,14 +1,10 @@
 import mongoose from 'mongoose';
 
-// Modelo base para usuarios del proyecto, preparado para la coleccion "usuarios".
 const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      trim: true
-    },
-    nombre_usuario: {
-      type: String,
+      required: true,
       trim: true
     },
     email: {
@@ -19,10 +15,8 @@ const userSchema = new mongoose.Schema(
       trim: true
     },
     password: {
-      type: String
-    },
-    contrasena: {
-      type: String
+      type: String,
+      required: true
     },
     rol: {
       type: String,
@@ -37,5 +31,4 @@ const userSchema = new mongoose.Schema(
 );
 
 const User = mongoose.model('User', userSchema);
-
 export default User;

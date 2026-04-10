@@ -1,7 +1,6 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { BrowserRouter } from 'react-router-dom';
-
 import { Header } from './features/auth/layout/components/Header';
 import { Footer } from './features/auth/layout/components/Footer';
 import { AppRoutes } from './AppRoutes';
