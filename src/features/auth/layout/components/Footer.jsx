@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+// Asegúrate de instalar react-icons si no los tienes: npm install react-icons
 import { FaGithub, FaInstagram, FaLinkedin, FaRobot } from 'react-icons/fa';
 import { MdMonetizationOn, MdCalculate } from 'react-icons/md';
 
@@ -59,25 +60,24 @@ export const Footer = () => {
           </div>
 
           {/* Columna 4: Recursos y Redes (Aquí estaba el error) */}
-          {/* Usamos col-12 en móviles y col-md-4 en PC para alinear */}
           <div className="col-12 col-md-4 text-center text-md-start">
             <h6 className="text-white mb-4 fw-bold">Recursos del Portal</h6>
             
-            {/* Íconos Alineados y con Instagram */}
+            {/* Íconos Alineados */}
             <div className="d-flex justify-content-center justify-content-md-start gap-4 mb-4">
               <a href="https://github.com/tu-usuario/APIVITE" target="_blank" rel="noopener noreferrer" className="text-muted fs-4 hover-white">
                 <FaGithub />
               </a>
               <a href="https://instagram.com/tu-perfil" target="_blank" rel="noopener noreferrer" className="text-muted fs-4 hover-white">
-                <FaInstagram /> {/* CAMBIO: Ahora es Instagram */}
+                <FaInstagram />
               </a>
               <a href="https://linkedin.com/in/tu-perfil" target="_blank" rel="noopener noreferrer" className="text-muted fs-4 hover-white">
                 <FaLinkedin />
               </a>
             </div>
 
-            {/* Caja de Recursos Corregida y Alineada */}
-            <div className="p-3 rounded border border-secondary bg-dark text-muted text-center text-md-start" style={{ fontSize: '0.75rem', backgroundColor: '#129934' }}>
+            {/* Caja de Recursos Corregida y Alineada (EL CAMBIO ESTÁ AQUÍ) */}
+            <div className="p-3 rounded border border-secondary bg-dark text-muted text-center text-md-start" style={{ fontSize: '0.75rem', backgroundColor: '#111' }}>
               Desplegado en: <span className="text-success fw-medium">Vercel</span> & <span className="text-info fw-medium">Render</span>.<br />
               Base de datos: <span className="text-success fw-medium">MongoDB Atlas</span>.
             </div>
