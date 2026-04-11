@@ -10,7 +10,10 @@ const initialRegisterData = {
   confirmPassword: ''
 };
 
-const API_URL = 'http://localhost:4000/api/auth';
+// --- SOLO ESTO CAMBIÓ PARA LA CONEXIÓN ---
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const API_URL = `${API_BASE}/api/auth`;
+// -----------------------------------------
 
 export const Login = () => {
   const [mode, setMode] = useState('login'); // 'login' | 'register' | 'forgot'
@@ -73,7 +76,8 @@ export const Login = () => {
       setSubmitting(true);
       setFeedback({ type: '', message: '' });
       const { data } = await axios.post(`${API_URL}/register`, {
-        name: registerData.fullName,
+        // Asegúrate de que tu backend reciba 'name' o 'fullName'
+        name: registerData.fullName, 
         email: registerData.email,
         password: registerData.password
       });
