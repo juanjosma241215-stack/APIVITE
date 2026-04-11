@@ -77,7 +77,7 @@ export const Footer = () => {
             </div>
 
             {/* Caja de Recursos Corregida y Alineada */}
-            <div className="p-3 rounded border border-secondary bg-dark text-muted text-center text-md-start" style={{ fontSize: '0.75rem', backgroundColor: '#111' }}>
+            <div className="p-3 rounded border border-secondary bg-dark text-muted text-center text-md-start" style={{ fontSize: '0.75rem', backgroundColor: '#129934' }}>
               Desplegado en: <span className="text-success fw-medium">Vercel</span> & <span className="text-info fw-medium">Render</span>.<br />
               Base de datos: <span className="text-success fw-medium">MongoDB Atlas</span>.
             </div>
