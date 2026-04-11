@@ -18,23 +18,45 @@ export const useRickAndMorty = () => {
     totalAmount: 0
   });
 
-  const fetchExpenses = useCallback(async () => {
+const fetchExpenses = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
-      const { data } = await axios.get('/api/expenses');
-      setExpenses(data);
+      // CAMBIO AQUÍ: Asegúrate de usar tu clienteAxios configurado o poner la URL completa
+      const { data } = await axios.get('/api/expenses'); 
+      
+      // SEGURIDAD: Solo guarda si la data es un Array
+      if (Array.isArray(data)) {
+        setExpenses(data);
+      } else {
+        setExpenses([]); // Si no es array, deja la lista vacía para que no explote
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'No fue posible cargar los gastos.');
+      setExpenses([]); // Limpia el estado en caso de error
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchExpenses();
-  }, [fetchExpenses]);
+    // SEGURIDAD: No ejecutes cálculos si expenses no es una lista
+    if (!Array.isArray(expenses)) return;
 
+    const totalAmount = expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+    const categoryCount = new Set(expenses.map((expense) => expense.category)).size;
+    const highExpenses = expenses.filter((expense) => expense.status === 'high').length;
+    const budgetUsed = `${Math.round((totalAmount / MONTHLY_BUDGET) * 100)}%`;
+
+    setStats({
+      total: expenses.length,
+      species: categoryCount,
+      alerts: highExpenses,
+      budgetUsed,
+      totalAmount
+    });
+  }, [expenses]);
+  
   useEffect(() => {
     const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
     const categoryCount = new Set(expenses.map((expense) => expense.category)).size;
