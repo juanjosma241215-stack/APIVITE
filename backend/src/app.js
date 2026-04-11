@@ -8,40 +8,42 @@ import { errorHandler, notFound } from './middlewares/errorMiddleware.js';
 
 const app = express();
 
-
-// --- CORRECCIÓN DE CORS ---
+// --- CONFIGURACIÓN DE CORS TOTAL ---
 const allowedOrigins = [
-  'https://apivite-htvt2d20g-juanjosma241215-3422s-projects.vercel.app', // URL exacta de tu imagen
-  'http://localhost:5173'
+  'https://apivite-nu.vercel.app', // Tu dominio principal
+  'http://localhost:5173'          // Tu local para pruebas
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Importante: En producción, 'origin' a veces viene como undefined en navegadores antiguos
-      // pero aquí lo forzamos para que tu URL de Vercel pase siempre.
-      if (!origin || allowedOrigins.includes(origin) || origin.includes('vercel.app')) {
+      // Si el origen es local, está en la lista o es CUALQUIER subdominio de vercel.app
+      if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
         callback(null, true);
       } else {
-        callback(new Error('No permitido por CORS'));
+        callback(new Error('No permitido por CORS para el origen: ' + origin));
       }
     },
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
   })
 );
+
 app.use(morgan('dev'));
 app.use(express.json());
 
-// Ruta de prueba
+// Ruta de prueba para verificar que el backend está vivo
 app.get('/', (_req, res) => {
   res.json({
-    message: 'API de Apivite funcionando',
+    message: 'API de Apivite funcionando correctamente',
     status: 'ok',
-    environment: process.env.NODE_ENV || 'development'
+    database: 'Connected (MongoDB Atlas)',
+    author: 'Juan José'
   });
 });
 
-// Rutas
+// Rutas de la API
 app.use('/api/tasks', taskRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/auth', authRoutes);
