@@ -8,18 +8,19 @@ import { errorHandler, notFound } from './middlewares/errorMiddleware.js';
 
 const app = express();
 
-// --- CORRECCIÓN DE CORS PARA PRODUCCIÓN ---
-// Permitimos múltiples orígenes o usamos una función para validar
+
+// --- CORRECCIÓN DE CORS ---
 const allowedOrigins = [
-  process.env.FRONTEND_URL, // Tu futura URL de Vercel
-  'http://localhost:5173'   // Para que sigas pudiendo probar en local
+  'https://apivite-htvt2d20g-juanjosma241215-3422s-projects.vercel.app', // URL exacta de tu imagen
+  'http://localhost:5173'
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Si no hay origen (como peticiones de Postman) o está en la lista permitida
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Importante: En producción, 'origin' a veces viene como undefined en navegadores antiguos
+      // pero aquí lo forzamos para que tu URL de Vercel pase siempre.
+      if (!origin || allowedOrigins.includes(origin) || origin.includes('vercel.app')) {
         callback(null, true);
       } else {
         callback(new Error('No permitido por CORS'));
@@ -28,8 +29,6 @@ app.use(
     credentials: true
   })
 );
-// ------------------------------------------
-
 app.use(morgan('dev'));
 app.use(express.json());
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { ApiRyC_Axios } from './features/auth/api/components/ApiRyC_Axios';
+import { ApiRyC_Axios } from './features/auth/services/components/ApiRyC_Axios';
 import { AdminDashboard } from './features/auth/dashboard/pages/AdminDashboard';
 import { Inicio } from './features/auth/layout/components/Inicio';
 import { Login } from './features/auth/layout/components/Login';
