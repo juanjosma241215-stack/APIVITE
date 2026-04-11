@@ -6,34 +6,48 @@ import expenseRoutes from './routes/expenseRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import { errorHandler, notFound } from './middlewares/errorMiddleware.js';
 
-// Configuración central de Express.
 const app = express();
 
-// Permitimos peticiones del frontend configurado en variables de entorno.
+// --- CORRECCIÓN DE CORS PARA PRODUCCIÓN ---
+// Permitimos múltiples orígenes o usamos una función para validar
+const allowedOrigins = [
+  process.env.FRONTEND_URL, // Tu futura URL de Vercel
+  'http://localhost:5173'   // Para que sigas pudiendo probar en local
+];
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173'
+    origin: function (origin, callback) {
+      // Si no hay origen (como peticiones de Postman) o está en la lista permitida
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('No permitido por CORS'));
+      }
+    },
+    credentials: true
   })
 );
+// ------------------------------------------
 
-// Log de peticiones y parser JSON para body requests.
 app.use(morgan('dev'));
 app.use(express.json());
 
-// Ruta de prueba para verificar que la API está viva.
+// Ruta de prueba
 app.get('/', (_req, res) => {
   res.json({
     message: 'API de Apivite funcionando',
-    status: 'ok'
+    status: 'ok',
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
-// Módulo CRUD de tareas.
+// Rutas
 app.use('/api/tasks', taskRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/auth', authRoutes);
 
-// Middleware final para rutas inexistentes y errores del servidor.
+// Manejo de errores
 app.use(notFound);
 app.use(errorHandler);
 
