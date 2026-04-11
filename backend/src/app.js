@@ -8,42 +8,45 @@ import { errorHandler, notFound } from './middlewares/errorMiddleware.js';
 
 const app = express();
 
-// --- CONFIGURACIÓN DE CORS TOTAL ---
+// --- CONFIGURACIÓN DE CORS PARA COMPATIBILIDAD TOTAL (iOS/Android/Web) ---
 const allowedOrigins = [
-  'https://apivite-nu.vercel.app', // Tu dominio principal
-  'http://localhost:5173'          // Tu local para pruebas
+  'https://apivite-nu.vercel.app',
+  'https://apivite-git-main-juanjosma241215-3422s-projects.vercel.app',
+  'http://localhost:5173'
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Si el origen es local, está en la lista o es CUALQUIER subdominio de vercel.app
+      // Permitimos si no hay origen (apps móviles/postman) o si está en la lista/subdominios vercel
       if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
         callback(null, true);
       } else {
-        callback(new Error('No permitido por CORS para el origen: ' + origin));
+        callback(new Error('Bloqueado por CORS: ' + origin));
       }
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // OPTIONS es vital para iPhone
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   })
 );
+
+// Habilitar el manejo de peticiones OPTIONS (Preflight) explícitamente para Safari
+app.options('*', cors());
 
 app.use(morgan('dev'));
 app.use(express.json());
 
-// Ruta de prueba para verificar que el backend está vivo
+// Ruta de prueba
 app.get('/', (_req, res) => {
   res.json({
-    message: 'API de Apivite funcionando correctamente',
+    message: 'API de Apivite optimizada para iOS y Android',
     status: 'ok',
-    database: 'Connected (MongoDB Atlas)',
-    author: 'Juan José'
+    environment: process.env.NODE_ENV || 'production'
   });
 });
 
-// Rutas de la API
+// Rutas
 app.use('/api/tasks', taskRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/auth', authRoutes);
