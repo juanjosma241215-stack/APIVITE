@@ -3,9 +3,11 @@ import axios from 'axios';
 
 const MONTHLY_BUDGET = 1050000;
 
-// Hook conectado al backend real para el CRUD de gastos.
+// Configuramos la URL base para que apunte a Render y no a Vercel
+const API_URL = import.meta.env.VITE_API_URL || 'https://apivite.onrender.com';
+
 export const useRickAndMorty = () => {
-  const [expenses, setExpenses] = useState([]);
+  const [expenses, setExpenses] = useState([]); // Siempre inicia como array vacío
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -18,47 +20,38 @@ export const useRickAndMorty = () => {
     totalAmount: 0
   });
 
-const fetchExpenses = useCallback(async () => {
+  const fetchExpenses = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
-      // CAMBIO AQUÍ: Asegúrate de usar tu clienteAxios configurado o poner la URL completa
-      const { data } = await axios.get('/api/expenses'); 
+      // Usamos la URL completa para evitar que busque en el dominio de Vercel
+      const { data } = await axios.get(`${API_URL}/api/expenses`);
       
-      // SEGURIDAD: Solo guarda si la data es un Array
+      // Validamos que la respuesta sea un array antes de guardarla
       if (Array.isArray(data)) {
         setExpenses(data);
       } else {
-        setExpenses([]); // Si no es array, deja la lista vacía para que no explote
+        console.error('La API no devolvió un array:', data);
+        setExpenses([]);
       }
     } catch (err) {
+      console.error('Error al cargar gastos:', err);
       setError(err.response?.data?.message || 'No fue posible cargar los gastos.');
-      setExpenses([]); // Limpia el estado en caso de error
+      setExpenses([]); // Evita que el estado quede como undefined
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    // SEGURIDAD: No ejecutes cálculos si expenses no es una lista
+    fetchExpenses();
+  }, [fetchExpenses]);
+
+  useEffect(() => {
+    // Si expenses no es un array, no ejecutamos los cálculos para evitar el error .filter/.reduce
     if (!Array.isArray(expenses)) return;
 
-    const totalAmount = expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
-    const categoryCount = new Set(expenses.map((expense) => expense.category)).size;
-    const highExpenses = expenses.filter((expense) => expense.status === 'high').length;
-    const budgetUsed = `${Math.round((totalAmount / MONTHLY_BUDGET) * 100)}%`;
-
-    setStats({
-      total: expenses.length,
-      species: categoryCount,
-      alerts: highExpenses,
-      budgetUsed,
-      totalAmount
-    });
-  }, [expenses]);
-  
-  useEffect(() => {
-    const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+    const totalAmount = expenses.reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
     const categoryCount = new Set(expenses.map((expense) => expense.category)).size;
     const highExpenses = expenses.filter((expense) => expense.status === 'high').length;
     const budgetUsed = `${Math.round((totalAmount / MONTHLY_BUDGET) * 100)}%`;
@@ -76,7 +69,7 @@ const fetchExpenses = useCallback(async () => {
     try {
       setSubmitting(true);
       setError('');
-      const { data } = await axios.post('/api/expenses', {
+      const { data } = await axios.post(`${API_URL}/api/expenses`, {
         name,
         category,
         amount
@@ -93,8 +86,10 @@ const fetchExpenses = useCallback(async () => {
     try {
       setSubmitting(true);
       setError('');
-      const { data } = await axios.put(`/api/expenses/${id}`, payload);
-      setExpenses((current) => current.map((expense) => (expense._id === id ? data : expense)));
+      const { data } = await axios.put(`${API_URL}/api/expenses/${id}`, payload);
+      setExpenses((current) => 
+        Array.isArray(current) ? current.map((expense) => (expense._id === id ? data : expense)) : []
+      );
     } catch (err) {
       throw new Error(err.response?.data?.message || 'No fue posible actualizar el gasto.');
     } finally {
@@ -106,8 +101,10 @@ const fetchExpenses = useCallback(async () => {
     try {
       setSubmitting(true);
       setError('');
-      await axios.delete(`/api/expenses/${id}`);
-      setExpenses((current) => current.filter((expense) => expense._id !== id));
+      await axios.delete(`${API_URL}/api/expenses/${id}`);
+      setExpenses((current) => 
+        Array.isArray(current) ? current.filter((expense) => expense._id !== id) : []
+      );
     } catch (err) {
       throw new Error(err.response?.data?.message || 'No fue posible eliminar el gasto.');
     } finally {
@@ -115,22 +112,12 @@ const fetchExpenses = useCallback(async () => {
     }
   };
 
-  const resetExpenses = async () => {
-    try {
-      setSubmitting(true);
-      setError('');
-      const { data } = await axios.post('/api/expenses/reset');
-      setExpenses(data);
-    } catch (err) {
-      throw new Error(err.response?.data?.message || 'No fue posible reiniciar la demo.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const filteredCharacters = expenses.filter((expense) =>
-    `${expense.name} ${expense.category}`.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filtro seguro: verifica que expenses sea array antes de filtrar
+  const filteredCharacters = Array.isArray(expenses) 
+    ? expenses.filter((expense) =>
+        `${expense.name} ${expense.category}`.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
 
   return {
     filteredCharacters,
@@ -144,7 +131,6 @@ const fetchExpenses = useCallback(async () => {
     addExpense,
     updateExpense,
     deleteExpense,
-    resetExpenses,
     refetchExpenses: fetchExpenses
   };
 };
