@@ -1,8 +1,6 @@
 import { Link } from 'react-router-dom';
 import { InfoCards } from './InfoCards';
 import { isAuthenticated } from '../../../../shared/auth/session';
-
-// Landing principal del proyecto. Ahora presenta la app con enfoque de gastos diarios.
 export const Inicio = () => {
   const hasSession = isAuthenticated();
 

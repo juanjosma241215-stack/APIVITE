@@ -193,14 +193,14 @@ export const Login = () => {
               </h1>
 
               <p className="text-light opacity-75 fs-5 mb-4">
-                El acceso ya usa tu base de datos real en MongoDB Atlas para gestionar usuarios.
+                El acceso usa tu base de datos real en MongoDB Atlas para gestionar usuarios.
               </p>
 
               <div className="row g-3 text-start">
                 {[
                   { icon: 'bi-person-check', title: 'Inicio validado', text: 'Verificamos credenciales desde MongoDB.' },
-                  { icon: 'bi-person-plus', title: 'Registro real', text: 'Usuarios persistentes en tu colección.' },
-                  { icon: 'bi-shield-check', title: 'Contraseña protegida', text: 'Backend usa hashing (Bcrypt).' }
+                  { icon: 'bi-person-plus', title: 'Registro ', text: 'Usuarios persistentes en tu colección.' },
+                  { icon: 'bi-shield-check', title: 'Contraseña protegida', text: 'Preveemos tu seguridad.' }
                 ].map((item) => (
                   <div className="col-12" key={item.title}>
                     <div
