@@ -4,7 +4,10 @@ const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
+      trim: true
+    },
+    nombre_usuario: {
+      type: String,
       trim: true
     },
     email: {
@@ -15,13 +18,26 @@ const userSchema = new mongoose.Schema(
       trim: true
     },
     password: {
-      type: String,
-      required: true
+      type: String
+    },
+    contrasena: {
+      type: String
     },
     rol: {
       type: String,
       default: 'user',
       trim: true
+    },
+    monthlyBudget: {
+      type: Number,
+      default: 1200000,
+      min: 0
+    },
+    budgetAlertThreshold: {
+      type: Number,
+      default: 100,
+      min: 1,
+      max: 300
     }
   },
   {
@@ -31,4 +47,5 @@ const userSchema = new mongoose.Schema(
 );
 
 const User = mongoose.model('User', userSchema);
+
 export default User;

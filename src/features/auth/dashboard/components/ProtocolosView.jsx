@@ -1,13 +1,11 @@
 import React from 'react';
 
-// Vista de alertas generada desde los gastos guardados.
-export const ProtocolosView = ({ expenses = [], stats }) => {
+export const ProtocolosView = ({ expenses = [], stats, budgetStatus }) => {
   const alerts = expenses
     .filter((expense) => expense.status === 'high')
     .map((expense) => ({
       id: expense._id,
       name: expense.name,
-      color: 'warning',
       amount: expense.amount,
       category: expense.category
     }));
@@ -19,8 +17,52 @@ export const ProtocolosView = ({ expenses = [], stats }) => {
           <i className="bi bi-bell-fill me-2"></i>ALERTAS Y RECORDATORIOS
         </h2>
         <p className="text-light opacity-75 px-2 mb-0">
-          Aqui aparecen los movimientos que merecen atencion porque tienen montos altos o impacto fuerte en el presupuesto.
+          Aqui aparecen los movimientos mas pesados y el estado actual de tu presupuesto personal.
         </p>
+      </div>
+
+      <div className="row g-3 mb-4">
+        <div className="col-12 col-xl-6">
+          <div className="p-4 rounded-5 border border-warning border-opacity-25 alert-card h-100">
+            <span className="small text-warning fw-bold d-block mb-2">Presupuesto mensual</span>
+            <h4 className={`fw-bold mb-2 ${budgetStatus?.isOverBudget ? 'text-danger' : 'text-white'}`}>
+              {budgetStatus?.isOverBudget
+                ? 'Has superado tu presupuesto'
+                : budgetStatus?.thresholdReached
+                  ? 'Estas muy cerca del limite'
+                  : 'Tu presupuesto sigue controlado'}
+            </h4>
+            <p className="small text-light opacity-75 mb-3">
+              Usado: ${Number(budgetStatus?.used || 0).toLocaleString('es-CO')} de $
+              {Number(budgetStatus?.limit || 0).toLocaleString('es-CO')}
+            </p>
+            <div className="progress bg-dark" style={{ height: '8px' }}>
+              <div
+                className={`progress-bar ${
+                  budgetStatus?.isOverBudget
+                    ? 'bg-danger'
+                    : budgetStatus?.thresholdReached
+                      ? 'bg-warning'
+                      : 'bg-success'
+                }`}
+                style={{ width: `${Math.min(budgetStatus?.percentage || 0, 100)}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-12 col-xl-6">
+          <div className="p-4 rounded-5 border border-info border-opacity-25 info-card h-100">
+            <span className="small text-info fw-bold d-block mb-2">Revision del mes</span>
+            <h4 className="fw-bold text-white mb-2">
+              {stats?.alerts > 0 ? `${stats.alerts} gastos requieren revision` : 'Sin alertas fuertes por monto'}
+            </h4>
+            <p className="small text-light opacity-75 mb-0">
+              Usa este espacio para detectar si conviene reducir compras impulsivas, transporte,
+              ocio o gastos recurrentes.
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="row g-3">
@@ -36,27 +78,24 @@ export const ProtocolosView = ({ expenses = [], stats }) => {
                   Este gasto supero el umbral sugerido y conviene revisarlo con mas detalle.
                 </p>
               </div>
-              <button className="btn btn-outline-warning btn-sm px-4 rounded-pill extra-small fw-bold">
-                REVISAR
-              </button>
+              <span className="badge rounded-pill text-bg-warning text-dark px-3 py-2">
+                Prioridad alta
+              </span>
             </div>
           </div>
         ))}
 
-        <div className="col-12 mt-4">
-          <div className="p-4 rounded-5 border border-warning border-opacity-30 shadow-glow-red text-center monthly-review-card">
-            <i className="bi bi-exclamation-triangle fs-1 text-warning d-block mb-2"></i>
-            <h4 className="text-warning fw-bold mb-1">REVISION DE CIERRE MENSUAL</h4>
-            <p className="small text-light opacity-75 mb-2">
-              Este resumen te ayuda a identificar rapido si el mes necesita ajustes.
-            </p>
-            <p className="extra-small text-warning opacity-50 mb-0">
-              {stats?.alerts > 0
-                ? `Tienes ${stats.alerts} gasto(s) altos que conviene revisar.`
-                : 'No hay alertas activas en este momento.'}
-            </p>
+        {alerts.length === 0 && (
+          <div className="col-12">
+            <div className="text-center border border-success border-opacity-10 rounded-4 p-4">
+              <i className="bi bi-bell-slash text-success fs-2 d-block mb-2"></i>
+              <p className="mb-1 text-white fw-semibold">No hay alertas criticas</p>
+              <p className="mb-0 text-light opacity-75">
+                Tus gastos altos y el presupuesto estan bajo control por ahora.
+              </p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <style>{`
@@ -65,10 +104,9 @@ export const ProtocolosView = ({ expenses = [], stats }) => {
             linear-gradient(180deg, rgba(28, 22, 7, 0.96) 0%, rgba(23, 18, 5, 0.92) 100%);
         }
 
-        .monthly-review-card {
+        .info-card {
           background:
-            radial-gradient(circle at top, rgba(255, 193, 7, 0.12), transparent 45%),
-            linear-gradient(180deg, rgba(26, 20, 5, 0.96) 0%, rgba(23, 18, 5, 0.92) 100%);
+            linear-gradient(180deg, rgba(6, 18, 28, 0.96) 0%, rgba(5, 13, 23, 0.92) 100%);
         }
       `}</style>
     </div>

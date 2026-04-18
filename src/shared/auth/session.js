@@ -1,7 +1,6 @@
 const AUTH_EVENT = 'authchange';
 const AUTH_STORAGE_KEY = 'authSession';
 
-// Devuelve la sesion actual parseada desde localStorage.
 export const getAuthSession = () => {
   const rawSession = localStorage.getItem(AUTH_STORAGE_KEY);
 
@@ -20,12 +19,13 @@ export const getAuthSession = () => {
   }
 };
 
-// Guarda una sesion consistente y emite un evento para refrescar la UI.
 export const saveAuthSession = (user) => {
   const session = {
     id: user.id,
     name: user.name,
-    email: user.email
+    email: user.email,
+    monthlyBudget: Number(user.monthlyBudget || 1200000),
+    budgetAlertThreshold: Number(user.budgetAlertThreshold || 100)
   };
 
   localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
@@ -35,7 +35,19 @@ export const saveAuthSession = (user) => {
   window.dispatchEvent(new Event(AUTH_EVENT));
 };
 
-// Limpia la sesion local y notifica el cambio.
+export const updateAuthSession = (partialUser) => {
+  const currentSession = getAuthSession();
+
+  if (!currentSession) {
+    return;
+  }
+
+  saveAuthSession({
+    ...currentSession,
+    ...partialUser
+  });
+};
+
 export const clearAuthSession = () => {
   localStorage.removeItem(AUTH_STORAGE_KEY);
   localStorage.removeItem('auth');
@@ -44,7 +56,6 @@ export const clearAuthSession = () => {
   window.dispatchEvent(new Event(AUTH_EVENT));
 };
 
-// Permite suscribirse a cambios de sesion desde distintos componentes.
 export const subscribeToAuthSession = (callback) => {
   const handleChange = () => callback();
 
