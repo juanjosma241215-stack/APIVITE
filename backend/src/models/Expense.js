@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 
-// Esquema principal para los gastos del dashboard financiero.
 const expenseSchema = new mongoose.Schema(
   {
     name: {
@@ -26,10 +25,17 @@ const expenseSchema = new mongoose.Schema(
     icon: {
       type: String,
       default: 'bi-wallet2'
+    },
+    // VINCULACIÓN: Referencia al ID del usuario
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
     }
   },
   {
     timestamps: true,
+    // Forzamos el nombre de la colección que vimos en tu Atlas
     collection: 'gastos'
   }
 );
